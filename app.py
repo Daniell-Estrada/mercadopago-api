@@ -18,7 +18,7 @@ def main():
     app.add_url_rule("/pending", view_func=mercadopago_views.pending)
     app.add_url_rule("/failure", view_func=mercadopago_views.failure)
 
-    app.run(port=5000, debug=True)
+    server = app.server
 
 
 if __name__ == "__main__":
