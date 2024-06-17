@@ -7,6 +7,7 @@ from . import *
 
 class MercadoPagoViews:
     def __init__(self) -> None:
+        self.HOST = getenv("HOST")
         MP_ACCESS_TOKEN = getenv("MP_ACCESS_TOKEN")
 
         self.client = SDK(MP_ACCESS_TOKEN)
@@ -29,11 +30,11 @@ class MercadoPagoViews:
                 }
             ],
             "auto_return": "approved",
-            "notification_url": "/notification",
+            "notification_url": f"{self.HOST}/notification",
             "back_urls": {
-                "success": "/success",
-                "pending": "/pending",
-                "failure": "/failure",
+                "success": f"{self.HOST}/success",
+                "pending": f"{self.HOST}/pending",
+                "failure": f"{self.HOST}/failure",
             },
         }
 
