@@ -4,7 +4,7 @@ from views import app
 from views.mercadopago_views import MercadoPagoViews
 
 
-def main():
+def create_app():
     load_dotenv()
     mercadopago_views = MercadoPagoViews()
 
@@ -13,13 +13,12 @@ def main():
         "/notification", view_func=mercadopago_views.notification, methods=["POST"]
     )
     app.add_url_rule("/payment/<payment_id>", view_func=mercadopago_views.get_payment)
-
     app.add_url_rule("/success", view_func=mercadopago_views.success)
     app.add_url_rule("/pending", view_func=mercadopago_views.pending)
     app.add_url_rule("/failure", view_func=mercadopago_views.failure)
 
-    server = app.server
+    return app
 
 
 if __name__ == "__main__":
-    main()
+    create_app().run(port=5000, debug=True)
