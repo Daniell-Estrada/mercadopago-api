@@ -14,38 +14,32 @@ class MercadoPagoViews:
         self.preference = self.client.preference()
         self.payment = self.client.payment()
 
+        self.validate = PreferenceValidator()
+
     def create_order(self):
-        # preference_object = request.json
-
-        preference_object = {
-            "items": [
-                {
-                    "id": "456",
-                    "description": "Laptop Dell Inspiron 15 3000",
-                    "picture_url": "http://product1.image.png",
-                    "quantity": 2,
-                    "title": "Item 1",
-                    "currency_id": "COP",
-                    "unit_price": 100000,
-                }
-            ],
-            "auto_return": "approved",
-            "notification_url": f"{self.HOST}/notification",
-            "back_urls": {
-                "success": f"{self.HOST}/success",
-                "pending": f"{self.HOST}/pending",
-                "failure": f"{self.HOST}/failure",
-            },
-        }
-
         try:
-            result = self.preference.create(preference_object)
-            print(result["response"]["init_point"])
+            preference_object = self.validate.validate(request.json)
 
+            result = self.preference.create(
+                {
+                    **preference_object,
+                    "auto_return": "approved",
+                    "notification_url": f"{self.HOST}/notification",
+                    "back_urls": {
+                        "success": f"{self.HOST}/success",
+                        "pending": f"{self.HOST}/pending",
+                        "failure": f"{self.HOST}/failure",
+                    },
+                }
+            )
+            if result["status"] != 201:
+                return jsonify({"error": result["response"]}), 400
+            
+            print(result["response"]["init_point"])
             return redirect(result["response"]["init_point"], code=302)
 
         except Exception as e:
-            return jsonify({"error": str(e)})
+            return jsonify({"error": str(e)}), 400
 
     def notification(self):
         payment = request.args
@@ -58,7 +52,7 @@ class MercadoPagoViews:
 
             return jsonify({"error": "Invalid payment"})
         except Exception as e:
-            return jsonify({"error": str(e)})
+            return jsonify({"error": str(e)}), 400
 
     def get_payment(self, payment_id: Optional[str] = None) -> dict[str, Any]:
         return self.payment.get(

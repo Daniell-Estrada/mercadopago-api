@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+from gevent.pywsgi import WSGIServer
 
 from views import app
 from views.mercadopago_views import MercadoPagoViews
@@ -6,9 +7,12 @@ from views.mercadopago_views import MercadoPagoViews
 
 def create_app():
     load_dotenv()
+
     mercadopago_views = MercadoPagoViews()
 
-    app.add_url_rule("/create-order", view_func=mercadopago_views.create_order)
+    app.add_url_rule(
+        "/create-order", view_func=mercadopago_views.create_order, methods=["POST"]
+    )
     app.add_url_rule(
         "/notification", view_func=mercadopago_views.notification, methods=["POST"]
     )
@@ -17,7 +21,11 @@ def create_app():
     app.add_url_rule("/pending", view_func=mercadopago_views.pending)
     app.add_url_rule("/failure", view_func=mercadopago_views.failure)
 
-    return app
+    return WSGIServer(("", 8000), app)
 
 
-create_app()
+if __name__ == "__main__":
+    ## create_app()
+    ## app.run(debug=True) # This is for development
+
+    create_app().serve_forever()  # This is for production
