@@ -27,7 +27,6 @@ class PreferenceValidator:
 
             return True
 
-        print(validate_item(keys=["quantity", "unit_price"]))
         if validate_item(keys=["quantity", "unit_price"]):
             return True
 

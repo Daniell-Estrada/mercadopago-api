@@ -16,9 +16,10 @@ class MercadoPagoViews:
 
         self.validate = PreferenceValidator()
 
-    def create_order(self):
+    def create_preference(self):
         try:
             preference_object = self.validate.validate(request.json)
+            root_host = request.host_url
 
             result = self.preference.create(
                 {
@@ -26,17 +27,19 @@ class MercadoPagoViews:
                     "auto_return": "approved",
                     "notification_url": f"{self.HOST}/notification",
                     "back_urls": {
-                        "success": f"{self.HOST}/success",
-                        "pending": f"{self.HOST}/pending",
-                        "failure": f"{self.HOST}/failure",
+                        "success": f"{root_host}success",
+                        "pending": f"{root_host}pending",
+                        "failure": f"{root_host}failure",
                     },
                 }
             )
             if result["status"] != 201:
                 return jsonify({"error": result["response"]}), 400
-            
-            print(result["response"]["init_point"])
-            return redirect(result["response"]["init_point"], code=302)
+
+            print(result["response"])
+            print(root_host)
+
+            return jsonify({"preference_id": result["response"]["id"]})
 
         except Exception as e:
             return jsonify({"error": str(e)}), 400
@@ -55,9 +58,10 @@ class MercadoPagoViews:
             return jsonify({"error": str(e)}), 400
 
     def get_payment(self, payment_id: Optional[str] = None) -> dict[str, Any]:
-        return self.payment.get(
-            payment_id, {"access_token": self.client.request_options.access_token}
-        )
+        return self.payment.get(payment_id)
+
+    def get_preference(self, preference_id: Optional[str] = None) -> dict[str, Any]:
+        return self.preference.get(preference_id)
 
     def success(self):
         return jsonify(request.args)
