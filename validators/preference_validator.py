@@ -5,13 +5,23 @@ class PreferenceValidator:
     def __init__(self) -> None:
         self.items = ["id", "title", "description", "quantity", "unit_price"]
         self.payer = ["name", "email"]
+        self.back_urls = ["success", "failure", "pending"]
 
     def validate(self, preference: Any) -> dict:
-        if preference.get("items") and preference.get("payer"):
+        if (
+            preference.get("items")
+            and preference.get("payer")
+            and preference.get("back_urls")
+        ):
             items = preference["items"]
             payer = preference["payer"]
+            back_urls = preference["back_urls"]
 
-            if self.validate_items(items) and self.validate_payer(payer):
+            if (
+                self.validate_items(items)
+                and self.validate_payer(payer)
+                and self.validate_back_urls(back_urls)
+            ):
                 return preference
 
         raise ValueError("Invalid preference")
@@ -36,3 +46,8 @@ class PreferenceValidator:
         if all([key in self.payer for key in payer]):
             return True
         raise ValueError("Invalid payer")
+
+    def validate_back_urls(self, back_urls: dict) -> bool:
+        if all([key in self.back_urls for key in back_urls]):
+            return True
+        raise ValueError("Invalid back_urls")

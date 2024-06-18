@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Optional, Tuple
 
 from mercadopago import SDK
 
@@ -16,58 +16,46 @@ class MercadoPagoViews:
 
         self.validate = PreferenceValidator()
 
+    @staticmethod
+    def layout_response(response) -> Tuple[Response, int]:
+        return jsonify(response["response"]), int(response["status"])
+
     def create_preference(self):
         try:
             preference_object = self.validate.validate(request.json)
-            root_host = request.host_url
 
             result = self.preference.create(
                 {
                     **preference_object,
                     "auto_return": "approved",
-                    "notification_url": f"{self.HOST}/notification",
-                    "back_urls": {
-                        "success": f"{root_host}success",
-                        "pending": f"{root_host}pending",
-                        "failure": f"{root_host}failure",
-                    },
+                    "notification_url": f"{self.HOST}/api/notification",
                 }
             )
-            if result["status"] != 201:
-                return jsonify({"error": result["response"]}), 400
+            if result["status"] == 201:
+                return self.layout_response(result)
 
-            print(result["response"])
-            print(root_host)
-
-            return jsonify({"preference_id": result["response"]["id"]})
+            return jsonify({"error": result["response"]}), 400
 
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
-    def notification(self):
+    def notification(self) -> Tuple[Response, int]:
         payment = request.args
 
         try:
             if payment.get("type") == "payment":
-                payment_info = self.get_payment(payment.get("data_id"))
-                print(payment_info)
-                return jsonify(payment_info)
+                return self.get_payment(payment["data.id"])
 
-            return jsonify({"error": "Invalid payment"})
+            return jsonify({"error": "Invalid payment."}), 400
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
-    def get_payment(self, payment_id: Optional[str] = None) -> dict[str, Any]:
-        return self.payment.get(payment_id)
+    def get_payment(self, payment_id: Optional[str] = None) -> Tuple[Response, int]:
+        response = self.payment.get(payment_id)
+        return self.layout_response(response)
 
-    def get_preference(self, preference_id: Optional[str] = None) -> dict[str, Any]:
-        return self.preference.get(preference_id)
-
-    def success(self):
-        return jsonify(request.args)
-
-    def pending(self):
-        return jsonify({"message": "Payment pending"})
-
-    def failure(self):
-        return jsonify({"message": "Payment failed"})
+    def get_preference(
+        self, preference_id: Optional[str] = None
+    ) -> Tuple[Response, int]:
+        response = self.preference.get(preference_id)
+        return self.layout_response(response)
